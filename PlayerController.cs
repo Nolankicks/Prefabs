@@ -26,12 +26,13 @@ public sealed class PlayerController : Component
 	public bool IsFirstPerson => distance == 0f;
 	private Vector3 CurrentOffset = Vector3.Zero;
 	private CharacterController controller;
-	private CameraComponent camera;
+
+	[Property] public CameraComponent camera { get; set; }
 	private ModelRenderer bodyRenderer;
 	protected override void OnAwake()
 	{
 		controller = Components.Get<CharacterController>();
-		camera = Scene.GetAllComponents<CameraComponent>().FirstOrDefault();
+		
 		bodyRenderer = body.Components.Get<ModelRenderer>();
 	}
 	protected override void OnUpdate()
@@ -193,7 +194,7 @@ public sealed class PlayerController : Component
 				IsCrouching = false;
 				controller.Height *= 2;
 			}
-			
+
 
 
 
