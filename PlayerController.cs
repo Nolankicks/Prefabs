@@ -10,15 +10,19 @@ public sealed class PlayerController : Component
 
 	[Property] public GameObject body { get; set; }
 	public Vector3 WishVelocity = Vector3.Zero;
-	[Property] CameraComponent cameraComponent { get; set; }
 	[Property] public CitizenAnimationHelper animationHelper { get; set; }
 	[Property] public float distance { get; set; } = 100;
 	[Property] public float GroundControl { get; set; } = 4;
 	[Property] public float AirControl { get; set; } = 0.1f;
 	[Property] public float Speed { get; set; } = 160;
+	[Property] public float RunSpeed { get; set; } = 320;
+	[Property] public float CrouchSpeed { get; set; } = 90;
 	[Property] public float MaxForce { get; set; } = 50;
 	[Property] public float JumpForce { get; set; } = 400;
 	[Property] public GameObject eye { get; set; }
+	[Property] public bool AbleToCrouch;
+	public bool IsCrouching = false;
+	public bool IsSprinting = false;
 	public bool IsFirstPerson => distance == 0f;
 
 	private CharacterController controller;
@@ -42,6 +46,8 @@ public sealed class PlayerController : Component
 		Rotatebody();
 		UpdateAnimations();
 		if (Input.Pressed("jump")) Jump();
+		CrouchUpdate();
+		IsSprinting = Input.Down("Run");
 
 			
 		
@@ -101,8 +107,9 @@ public sealed class PlayerController : Component
 
 		WishVelocity = WishVelocity.WithZ(0);
 		if (!WishVelocity.IsNearZeroLength) WishVelocity = WishVelocity.Normal;
-
-		WishVelocity *= Speed;
+		if (IsCrouching) WishVelocity *= CrouchSpeed;
+		else if (IsSprinting) WishVelocity *= RunSpeed;
+		else WishVelocity *= Speed;
 	}
 	
 	void Move()
@@ -156,7 +163,8 @@ public sealed class PlayerController : Component
 		animationHelper.AimAngle = eye.Transform.Rotation;
 		animationHelper.IsGrounded = controller.IsOnGround;
 		animationHelper.WithLook(eye.Transform.Rotation.Forward, 1f, 0.75f, 0.5f);
-		animationHelper.MoveStyle = CitizenAnimationHelper.MoveStyles.Run;
+		animationHelper.MoveStyle = CitizenAnimationHelper.MoveStyles.Auto;
+		animationHelper.DuckLevel = IsCrouching ? 1f : 0f;
 	}
 	void Jump()
 	{
@@ -165,5 +173,36 @@ public sealed class PlayerController : Component
 		controller.Punch(Vector3.Up * JumpForce);
 		animationHelper?.TriggerJump();
 	}
+
+	void CrouchUpdate()
+	{
+		var crouchTr = Scene.Trace.Ray(body.Transform.Position, body.Transform.Position + body.Transform.Rotation.Up * 50f)
+			.WithoutTags("player", "trigger")
+			.Run();
+		if (controller is null) return;
+
+			if(Input.Pressed("Duck") && !IsCrouching)
+			{
+				IsCrouching = true;
+				controller.Height /= 2;
+			}
+			if (Input.Released("Duck") && IsCrouching)
+			{
+				if (crouchTr.Hit)
+				{
+					IsCrouching = true;
+					controller.Height /= 2;
+				}
+				else
+				{
+					IsCrouching = false;
+					controller.Height *= 2;
+				}
+			}
+
+
+
+	}
 	
 }
+
