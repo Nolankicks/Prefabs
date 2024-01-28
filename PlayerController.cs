@@ -24,7 +24,7 @@ public sealed class PlayerController : Component
 	public bool IsCrouching = false;
 	public bool IsSprinting = false;
 	public bool IsFirstPerson => distance == 0f;
-
+	private Vector3 CurrentOffset = Vector3.Zero;
 	private CharacterController controller;
 	private CameraComponent camera;
 	private ModelRenderer bodyRenderer;
@@ -49,13 +49,15 @@ public sealed class PlayerController : Component
 		CrouchUpdate();
 		IsSprinting = Input.Down("Run");
 
-			
+		var tartetOffeset = Vector3.Zero;
+		if (IsCrouching) tartetOffeset += Vector3.Down * 32f;
+		CurrentOffset = Vector3.Lerp(CurrentOffset, tartetOffeset, Time.Delta * 10f);
 		
 
 
 		if (camera is not null)
 		{
-			var camPos = eye.Transform.Position;
+			var camPos = eye.Transform.Position + CurrentOffset;
 			if (!IsFirstPerson)
 			{
 			
@@ -186,19 +188,12 @@ public sealed class PlayerController : Component
 				IsCrouching = true;
 				controller.Height /= 2;
 			}
-			if (Input.Released("Duck") && IsCrouching)
+			if (Input.Released("Duck") && IsCrouching && !crouchTr.Hit)
 			{
-				if (crouchTr.Hit)
-				{
-					IsCrouching = true;
-					controller.Height /= 2;
-				}
-				else
-				{
-					IsCrouching = false;
-					controller.Height *= 2;
-				}
+				IsCrouching = false;
+				controller.Height *= 2;
 			}
+			
 
 
 
