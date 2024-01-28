@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net.Http;
 using Sandbox;
 using Sandbox.Citizen;
+namespace Kicks;
 
 public sealed class PlayerController : Component
 {
