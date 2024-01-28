@@ -18,12 +18,16 @@ public sealed class PlayerController : Component
 	[Property] public float MaxForce { get; set; } = 50;
 	[Property] public float JumpForce { get; set; } = 400;
 	[Property] public GameObject eye { get; set; }
+	public bool IsFirstPerson => distance == 0f;
+
 	private CharacterController controller;
 	private CameraComponent camera;
+	private ModelRenderer bodyRenderer;
 	protected override void OnAwake()
 	{
 		controller = Components.Get<CharacterController>();
 		camera = Scene.GetAllComponents<CameraComponent>().FirstOrDefault();
+		bodyRenderer = body.Components.Get<ModelRenderer>();
 	}
 	protected override void OnUpdate()
 	{
@@ -38,9 +42,16 @@ public sealed class PlayerController : Component
 		UpdateAnimations();
 		if (Input.Pressed("jump")) Jump();
 
+			
+		
+
+
 		if (camera is not null)
 		{
 			var camPos = eye.Transform.Position;
+			if (!IsFirstPerson)
+			{
+			
 			var camFoward = eyeAngles.ToRotation().Forward;
 			var camTrace = Scene.Trace.Ray(camPos, camPos - (camFoward * distance))
 			.WithoutTags("player", "trigger")
@@ -54,11 +65,23 @@ public sealed class PlayerController : Component
 			{
 				camPos = camTrace.EndPosition;
 			}
+			bodyRenderer.RenderType = ModelRenderer.ShadowRenderType.On;
+
+		}
+			else
+			{
+				bodyRenderer.RenderType = ModelRenderer.ShadowRenderType.ShadowsOnly;
+				camera.FieldOfView = 90;
+			}
 			camera.Transform.Position = camPos;
 			camera.Transform.Rotation = eyeAngles.ToRotation();
-		}
 
+		}
+		
 	}
+
+		
+	
 	protected override void OnFixedUpdate()
 	{
 		BuildWishVelocity();
